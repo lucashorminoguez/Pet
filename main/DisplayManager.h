@@ -10,7 +10,7 @@ public:
     void clearScreen(uint16_t color = TFT_BLACK);
     void drawRoomBackground();
     TFT_eSPI& getTFT();
-
+    void clearPet(int x, int y);
 private:
     TFT_eSPI tft;
 };

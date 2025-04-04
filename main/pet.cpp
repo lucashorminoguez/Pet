@@ -1,18 +1,29 @@
 #include "Pet.h"
-#include "Mapache.h" // Incluye el archivo con el array de la imagen
-
-// Inicializamos la variable estática
+#include "Mapache.h" // Array de la imagen
+#include "shit.h" // Array de shit
+// Inicializo la variable estática
 Pet* Pet::instance = nullptr;
 int Pet::happiness = 100;
 int Pet::hunger = 100;
 int Pet::toilet = 100;
 int Pet::sleep = 100;
+int xpos_anterior = 0;
+bool shit_done = false;
+int Pet::shit_posx = 0;
+int Pet::shit_posy = 0;
+extern const uint8_t feliz_a[];
+extern const uint8_t mapache[];
+extern const uint8_t normal[];
+extern const uint8_t comiendo_a[];
+bool alimentar= true ;
 
 Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager) 
-    : displayManager(displayManager), interactionManager(interactionManager), // Inicializar interactionManager
-      currentState(HAPPY), xpos(0), ypos(0) {
-    petImage = mapache; // mapache es el array de la imagen
-    petImageSize = sizeof(mapache);
+    : displayManager(displayManager), interactionManager(interactionManager), // Inicializo interactionManager
+      currentState(HAPPY), xpos(0), ypos(10) {
+    petImage = feliz_a; // nombre del array de la imagen
+    shitImage = shit;
+    shitImageSize = sizeof(shit);
+    petImageSize = sizeof(feliz_a);
   if (instance == nullptr) {
     instance = this;
   }
@@ -20,6 +31,7 @@ Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager)
 
 void Pet::feed() {
     hunger = min(100, hunger + 30); // Aumentar el hambre
+   alimentar = false;
 }
 
 void Pet::play() {
@@ -44,9 +56,8 @@ Pet::State Pet::getState() const {
 }
 
 void Pet::render() {
-    //Solo dibujar la mascota si el menu no esta cerrado 
     if (!interactionManager.isMenuOpen()) {
-        drawPet(); // Dibuja la mascota
+    //Solo dibujar la mascota si el menu no esta cerrado 
         // Dibujar los indicadores
         displayManager.getTFT().setTextSize(1);
         displayManager.getTFT().setTextColor(TFT_WHITE, TFT_BLACK);
@@ -58,14 +69,51 @@ void Pet::render() {
         displayManager.getTFT().drawString("Hambre: " + String(hunger) + "%", 10, 30);
 
         // Baño
-        displayManager.getTFT().drawString("Baño: " + String(toilet) + "%", 10, 50);
+        displayManager.getTFT().drawString("Higiene: " + String(toilet) + "%", 10, 50);
 
         // Sueño
         displayManager.getTFT().drawString("Sueño: " + String(sleep) + "%", 10, 70);
+        if (toilet < 90){
+         // if(!shit_done){
+          drawShit(20,100);
+         // shit_done = true;
+         // }
+       // } else {
+          //shit_done = false ;
+        }
+        if (toilet<60){
+          drawShit(160,100);
+        }
+        if(toilet<30){
+          drawShit(97,100);
+        }
+        if (xpos_anterior != xpos ){
+          displayManager.clearPet(xpos_anterior, ypos-10);
+          xpos_anterior = instance -> xpos ;
+        }
+        drawPet(); // Dibuja la mascota
     }
 }
 
-
+void Pet::drawShit(int posx, int posy) {
+    // Asignamos las posiciones antes de llamar al callback
+    shit_posx = posx;
+    shit_posy = posy;
+    
+    int16_t rc = png.openFLASH((uint8_t *)shitImage, shitImageSize, [](PNGDRAW *pDraw) {
+        if (instance) {
+            instance->pngDrawxy(pDraw, shit_posx, shit_posy);
+        }
+    });
+    
+    if (rc == PNG_SUCCESS) {
+        uint16_t pngw = png.getWidth();
+        uint16_t pngh = png.getHeight();
+        displayManager.getTFT().startWrite();
+        png.decode(NULL, 0);
+        displayManager.getTFT().endWrite();
+    }
+}
 void Pet::drawPet() {
     uint16_t pngw = 0, pngh = 0;
 
@@ -92,19 +140,54 @@ void Pet::pngDraw(PNGDRAW *pDraw) {
     png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
 
     if (png.getAlphaMask(pDraw, maskBuffer, 255)) {
-        displayManager.getTFT().pushMaskedImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer, maskBuffer);
+        displayManager.getTFT().pushMaskedImage(instance ->xpos, instance->ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer, maskBuffer);
+    }
+}
+
+void Pet::pngDrawxy(PNGDRAW *pDraw,int pos_x,int pos_y) {
+    uint16_t lineBuffer[MAX_IMAGE_WIDTH];          // Line buffer for rendering
+    uint8_t  maskBuffer[1 + MAX_IMAGE_WIDTH / 8];  // Mask buffer
+
+    png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
+
+    if (png.getAlphaMask(pDraw, maskBuffer, 255)) {
+        displayManager.getTFT().pushMaskedImage(pos_x, pos_y + pDraw->y, pDraw->iWidth, 1, lineBuffer, maskBuffer);
     }
 }
 
 void Pet::moveLeft() {
-    xpos = max(0, xpos - 10); // Mover 10 píxeles a la izquierda (sin salir de la pantalla)
-    render(); // Redibujar el pet en la nueva posición
+    Serial.println("moveLeft llamado");
+    if (instance) {
+        Serial.print("xpos antes: ");
+        Serial.println(instance->xpos);
+        instance->xpos = instance->xpos - 10;
+        
+        Serial.print("xpos después: ");
+        Serial.println(instance->xpos);
+        instance->render();
+    } else {
+        Serial.println("ERROR: instance es nullptr");
+    }
 }
 
+
 void Pet::moveRight() {
-    xpos = min(displayManager.getTFT().width() - png.getWidth(), xpos + 10); // Mover 10 píxeles a la derecha (sin salir de la pantalla)
-    render(); // Redibujar el pet en la nueva posición
+    Serial.println("moveRight llamado");
+    if (instance) {
+        Serial.print("xpos antes: ");
+        Serial.println(instance->xpos);
+        
+        instance->xpos += 10;  // Aumenta la posición en 10
+        
+        Serial.print("xpos después: ");
+        Serial.println(instance->xpos);
+        
+        instance->render();
+    } else {
+        Serial.println("ERROR: instance es nullptr");
+    }
 }
+
 
 
 // Función auxiliar local para convertir el estado en una cadena legible
@@ -133,7 +216,6 @@ void Pet::update() {
         hunger = max(0, hunger - 1);       // El hambre aumenta con el tiempo
         toilet = max(0, toilet - 1);       // La necesidad de ir al baño aumenta
         sleep = max(0, sleep - 1);         // El sueño aumenta con el tiempo
-
         // Depuración: Mostrar los valores de los indicadores
         Serial.println("Contador reiniciado. Valores actuales:");
         Serial.println("  Felicidad: " + String(happiness));
@@ -148,7 +230,7 @@ void Pet::update() {
     // Cambiar el estado de la mascota según los indicadores
     if (hunger <= 20) {
         setState(HUNGRY);
-    } else if (toilet <= 20) {
+    } else if (toilet <= 99) {
         setState(DIRTY);
     } else if (sleep <= 20) {
         setState(SLEEPY);
@@ -162,7 +244,29 @@ void Pet::update() {
     if (getState() != previousState) {
         Serial.println("Estado cambiado a: " + getStateName(getState()));
     }
-
+    updateAppearance();
     // Renderizar el pet
-    render();
+    instance ->render();
+}
+
+
+
+void Pet::updateAppearance() {
+    if (happiness < 99) {
+        petImage = normal;
+    }
+    else if (hunger < 30) {
+       // petImage = mapache_hambriento;
+    }
+    else if (sleep < 30) {
+       // petImage = mapache_dormido;
+    }
+    else {
+       //petImage = feliz_a;
+    }
+
+    if (alimentar = false) {
+      petImage = comiendo_a;
+      alimentar = true ;
+    }
 }

@@ -1,5 +1,4 @@
 #include "DisplayManager.h"
-
 DisplayManager::DisplayManager() {}
 
 void DisplayManager::init() {
@@ -24,4 +23,8 @@ void DisplayManager::drawRoomBackground() {
 
     // Dibujar el piso (1/4 de la pantalla)
     tft.fillRect(0, tft.height() * 3 / 4, tft.width(), tft.height() / 4, floorColor);
+}
+void DisplayManager::clearPet(int x, int y){
+  uint16_t wallColor = tft.color565(245, 245, 220); // Beige (RGB: 245, 245, 220);
+  tft.fillRect(x+70, y+80, 110, 100, wallColor); // Borra la mascota anterior
 }

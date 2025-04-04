@@ -1,5 +1,8 @@
 #include "InteractionManager.h"
+#include "Game.h"
 #include "Pet.h" // Incluir aquí para acceder a los métodos de Pet
+
+
 
 InteractionManager::InteractionManager(DisplayManager& displayManager, Pet& pet)
     : displayManager(displayManager), pet(pet), menuIsOpen(false), selectedMenuItem(0) {}
@@ -31,8 +34,7 @@ void InteractionManager::update() {
             // Ejecutar la acción seleccionada y salir del menu
             selectMenuItem();
             menuIsOpen = false;
-            displayManager.clearScreen(TFT_BLACK); // Borrar la pantalla
-            pet.render(); // Volver a mostrar la mascota
+            displayManager.drawRoomBackground(); // Borrar la pantalla
         } else {
             // Fuera del menu: Mover el pet a la izquierda
             pet.moveLeft();
@@ -43,8 +45,8 @@ void InteractionManager::update() {
         if (menuIsOpen) {
             // Salir del menu sin seleccionar nada
             menuIsOpen = false;
-            displayManager.clearScreen(TFT_BLACK); // Borrar la pantalla
-            pet.render(); // Volver a mostrar el pet
+            displayManager.drawRoomBackground(); // Borrar la pantalla
+
         } else {
             // Fuera del menu: Mover el pet hacia la derecha
             pet.moveRight();
@@ -53,11 +55,13 @@ void InteractionManager::update() {
 }
 
 void InteractionManager::selectMenuItem() {
+    Game game(displayManager.getTFT());  // Aquí asumimos que displayManager.getTFT() devuelve el objeto TFT
     switch (selectedMenuItem) {
         case 0:
             pet.feed(); // aumenta hambre
             break;
         case 1:
+            game.playGame();  // Llama al juego
             pet.play(); // aumenta felicidad
             break;
         case 2:

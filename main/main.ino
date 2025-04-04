@@ -1,5 +1,5 @@
 #include "Pet.h"
-
+#include "game.h"
 DisplayManager displayManager;
 Pet* pet = nullptr; // Declarar un puntero a Pet
 InteractionManager* interactionManager = nullptr; // Declarar un puntero a InteractionManager
@@ -32,7 +32,7 @@ void setup() {
     Serial.println("InteractionManager inicializado");
 }
 
-void loop() {
+void loop() { 
     pet->update(); // Actualizar el estado del pet
     interactionManager->update(); // Actualizar la interacción con los botones
     delay(100); // Pequeño delay para evitar rebotes
