@@ -24,7 +24,6 @@ public:
     void moveLeft();
     void moveRight();
     void updateAppearance();
-
     // Indicadores
     int getHappiness() const;
     int getHunger() const;
@@ -42,7 +41,7 @@ private:
     size_t petImageSize;
     size_t shitImageSize;
     static int shit_posx;  // Variable estática para posición X
-    static int shit_posy;  // Variable estática para posición Y
+    static int shit_posy;  // Variable estática para posición y
     // Indicadores
     static int happiness;
     static int hunger;

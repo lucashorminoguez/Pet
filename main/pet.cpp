@@ -15,7 +15,9 @@ extern const uint8_t feliz_a[];
 extern const uint8_t mapache[];
 extern const uint8_t normal[];
 extern const uint8_t comiendo_a[];
-bool alimentar= true ;
+int alimentar = 0;
+int stop_sleep = 0;
+int dormir = 0;
 
 Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager) 
     : displayManager(displayManager), interactionManager(interactionManager), // Inicializo interactionManager
@@ -23,15 +25,17 @@ Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager)
     petImage = feliz_a; // nombre del array de la imagen
     shitImage = shit;
     shitImageSize = sizeof(shit);
-    petImageSize = sizeof(feliz_a);
+    petImageSize = sizeof(comiendo_a);
   if (instance == nullptr) {
     instance = this;
   }
 }
 
 void Pet::feed() {
+    if (dormir == 0){
     hunger = min(100, hunger + 30); // Aumentar el hambre
-   alimentar = false;
+    alimentar = 1;
+    }
 }
 
 void Pet::play() {
@@ -39,7 +43,13 @@ void Pet::play() {
 }
 
 void Pet::goToSleep() {  // Renombrado de sleep a goToSleep
+    if (dormir>0){
+      stop_sleep = 1;
+      dormir = 1;
+    } else {
     sleep = min(100, sleep + 30); // Aumentar el sueño
+    dormir = 1;
+    }
 }
 
 void Pet::clean() {
@@ -55,6 +65,7 @@ Pet::State Pet::getState() const {
     return currentState;
 }
 
+
 void Pet::render() {
     if (!interactionManager.isMenuOpen()) {
     //Solo dibujar la mascota si el menu no esta cerrado 
@@ -69,10 +80,10 @@ void Pet::render() {
         displayManager.getTFT().drawString("Hambre: " + String(hunger) + "%", 10, 30);
 
         // Baño
-        displayManager.getTFT().drawString("Higiene: " + String(toilet) + "%", 10, 50);
+        displayManager.getTFT().drawString("Higiene: " + String(toilet) + "%", 120, 30);
 
         // Sueño
-        displayManager.getTFT().drawString("Sueño: " + String(sleep) + "%", 10, 70);
+        displayManager.getTFT().drawString("Sueño: " + String(sleep) + "%", 120, 10);
         if (toilet < 90){
          // if(!shit_done){
           drawShit(20,100);
@@ -88,8 +99,12 @@ void Pet::render() {
           drawShit(97,100);
         }
         if (xpos_anterior != xpos ){
+          if(dormir>0){
+            xpos = xpos_anterior;
+          }else{
           displayManager.clearPet(xpos_anterior, ypos-10);
           xpos_anterior = instance -> xpos ;
+          }
         }
         drawPet(); // Dibuja la mascota
     }
@@ -250,23 +265,49 @@ void Pet::update() {
 }
 
 
-
+int cont_alimentar = 0;
 void Pet::updateAppearance() {
-    if (happiness < 99) {
+    if(dormir>0){
+      if (dormir == 1) {
+          //delay(600);
+          petImage = durmiendo_a;
+          displayManager.clearPet(xpos_anterior,ypos-10);
+          dormir ++;
+       if(stop_sleep == 1){
+          stop_sleep=0;
+          displayManager.clearPet(xpos_anterior,ypos-10);
+          dormir = 0;
+        }
+      }else{
+        //delay(600);
+        //petImage = durmiendo_b;
+       // displayManager.clearPet(xpos_anterior,ypos-10);
+       // dormir =1;
+      }
+    }
+    if (happiness < 100 && dormir==0) {
         petImage = normal;
     }
-    else if (hunger < 30) {
-       // petImage = mapache_hambriento;
-    }
-    else if (sleep < 30) {
-       // petImage = mapache_dormido;
-    }
-    else {
-       //petImage = feliz_a;
-    }
-
-    if (alimentar = false) {
+    if (alimentar == 1) {
+      cont_alimentar ++ ;
+      if(cont_alimentar==1){
+      displayManager.clearPet(xpos_anterior,ypos-10);
       petImage = comiendo_a;
-      alimentar = true ;
+      }else if(cont_alimentar==2){
+        delay(600);
+        petImage = comiendo_b;
+        displayManager.clearPet(xpos_anterior,ypos-10);
+      }else if (cont_alimentar ==3){
+        delay(600);
+        petImage= comiendo_a;
+        displayManager.clearPet(xpos_anterior,ypos-10);
+      } else if (cont_alimentar == 4){
+        delay(600);
+        cont_alimentar=0;
+        alimentar = 0;
+      }
+    }
+    if(happiness > 99){
+      petImage = feliz_a;
     }
 }

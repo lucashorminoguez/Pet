@@ -2,6 +2,7 @@
 #define INTERACTION_MANAGER_H
 
 #include "DisplayManager.h"
+#include <string.h>
 class Pet; // Declaración adelantada (en lugar de #include "Pet.h")
 
 class InteractionManager {

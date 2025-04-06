@@ -26,5 +26,5 @@ void DisplayManager::drawRoomBackground() {
 }
 void DisplayManager::clearPet(int x, int y){
   uint16_t wallColor = tft.color565(245, 245, 220); // Beige (RGB: 245, 245, 220);
-  tft.fillRect(x+70, y+80, 110, 100, wallColor); // Borra la mascota anterior
+  tft.fillRect(x+50, y+50, 210, 130, wallColor); // Borra la mascota anterior
 }

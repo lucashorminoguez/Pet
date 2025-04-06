@@ -1,8 +1,7 @@
 #include "InteractionManager.h"
 #include "Game.h"
 #include "Pet.h" // Incluir aquí para acceder a los métodos de Pet
-
-
+bool dormir2 = false;
 
 InteractionManager::InteractionManager(DisplayManager& displayManager, Pet& pet)
     : displayManager(displayManager), pet(pet), menuIsOpen(false), selectedMenuItem(0) {}
@@ -66,6 +65,7 @@ void InteractionManager::selectMenuItem() {
             break;
         case 2:
             pet.goToSleep(); //aumenta sueño
+            dormir2 = !dormir2;
             break;
         case 3:
             pet.clean(); // aumenta baño
@@ -85,8 +85,14 @@ void InteractionManager::openMenu() {
 
 void InteractionManager::displayMenu() {
     displayManager.clearScreen(TFT_PINK);
+    char aux_dormir[20];
+    if(dormir2 == true){
+      strcpy(aux_dormir,"Dejar de dormir");
+    } else {
+      strcpy(aux_dormir,"Dormir");
+    }
 
-    const char* menuItems[] = {"Alimentar", "Jugar", "Dormir", "Limpiar"};
+    const char* menuItems[] = {"Alimentar", "Jugar", aux_dormir, "Limpiar"};
     displayManager.getTFT().setTextSize(2); // Tamaño de las letras
 
     for (int i = 0; i < 4; i++) {
