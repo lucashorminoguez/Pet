@@ -18,6 +18,7 @@ extern const uint8_t comiendo_a[];
 int alimentar = 0;
 int stop_sleep = 0;
 int dormir = 0;
+bool first_open = true;
 
 Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager) 
     : displayManager(displayManager), interactionManager(interactionManager), // Inicializo interactionManager
@@ -84,19 +85,20 @@ void Pet::render() {
 
         // Sueño
         displayManager.getTFT().drawString("Sueño: " + String(sleep) + "%", 120, 10);
-        if (toilet < 90){
-         // if(!shit_done){
-          drawShit(20,100);
-         // shit_done = true;
-         // }
-       // } else {
-          //shit_done = false ;
-        }
-        if (toilet<60){
-          drawShit(160,100);
-        }
-        if(toilet<30){
-          drawShit(97,100);
+        if (first_open == true ){
+            if (toilet < 90){
+                drawShit(20,100);
+                Serial.println("\nSe prendio por first_open");
+                first_open = false ;
+            }
+            if (toilet<60){
+              drawShit(160,100);
+              first_open = false;
+            }
+            if(toilet<30){
+                drawShit(97,100);
+                first_open= false;
+            }
         }
         if (xpos_anterior != xpos ){
           if(dormir>0){
@@ -104,9 +106,21 @@ void Pet::render() {
           }else{
           displayManager.clearPet(xpos_anterior, ypos-10);
           xpos_anterior = instance -> xpos ;
+            if(toilet<90){
+                drawShit(20,100);  
+                Serial.println("\nSe prendio por cambio de posicion");
+            }
+            if(toilet<60){
+                drawShit(160,100);
+            }
+            if(toilet<30){
+                drawShit(97,100);
+            }
           }
         }
         drawPet(); // Dibuja la mascota
+    }else {
+        first_open = true;
     }
 }
 
@@ -272,6 +286,7 @@ void Pet::updateAppearance() {
           //delay(600);
           petImage = durmiendo_a;
           displayManager.clearPet(xpos_anterior,ypos-10);
+          first_open = true ;
           dormir ++;
        if(stop_sleep == 1){
           stop_sleep=0;
@@ -285,7 +300,7 @@ void Pet::updateAppearance() {
        // dormir =1;
       }
     }
-    if(happiness<99 && dormir==0){
+    if(happiness<30 && dormir==0){
         petImage = enojado_a;
     }else if (happiness < 100 && dormir==0) {
         petImage = normal;
@@ -295,16 +310,19 @@ void Pet::updateAppearance() {
     if (alimentar == 1) {
       cont_alimentar ++ ;
       if(cont_alimentar==1){
-      displayManager.clearPet(xpos_anterior,ypos-10);
-      petImage = comiendo_a;
+        displayManager.clearPet(xpos_anterior,ypos-10);
+        first_open = true ;
+        petImage = comiendo_a;
       }else if(cont_alimentar==2){
         delay(600);
         petImage = comiendo_b;
         displayManager.clearPet(xpos_anterior,ypos-10);
+        first_open = true ;
       }else if (cont_alimentar ==3){
         delay(600);
         petImage= comiendo_a;
         displayManager.clearPet(xpos_anterior,ypos-10);
+        first_open = true ;
       } else if (cont_alimentar == 4){
         delay(600);
         cont_alimentar=0;
