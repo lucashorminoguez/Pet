@@ -12,12 +12,13 @@ public:
     void init();
     void update();
 
+
 private:
     DisplayManager& displayManager;
     Pet& pet;
     bool menuIsOpen;
     int selectedMenuItem;
-
+    void show_wifi_networks();
     void openMenu();
     void displayMenu();
     void goBack();
