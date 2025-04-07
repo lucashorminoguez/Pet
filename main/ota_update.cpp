@@ -26,7 +26,9 @@ bool check_and_update_firmware(const char* localVersion) {
     String fullBinUrl = String(BASE_BIN_URL) + "firmware_v" + remoteVersion + ".bin";
     Serial.println("Descargando firmware desde: " + fullBinUrl);
 
-    t_httpUpdate_return ret = httpUpdate.update(fullBinUrl);
+    WiFiClient client;
+    t_httpUpdate_return ret = httpUpdate.update(client, fullBinUrl);
+
     if (ret == HTTP_UPDATE_OK) {
       Serial.println("Actualización OTA exitosa.");
       return true;

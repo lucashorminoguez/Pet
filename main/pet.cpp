@@ -285,8 +285,12 @@ void Pet::updateAppearance() {
        // dormir =1;
       }
     }
-    if (happiness < 100 && dormir==0) {
+    if(happiness<99 && dormir==0){
+        petImage = enojado_a;
+    }else if (happiness < 100 && dormir==0) {
         petImage = normal;
+    } else if(happiness > 99 && dormir==0){
+      petImage = feliz_a;
     }
     if (alimentar == 1) {
       cont_alimentar ++ ;
@@ -306,8 +310,5 @@ void Pet::updateAppearance() {
         cont_alimentar=0;
         alimentar = 0;
       }
-    }
-    if(happiness > 99){
-      petImage = feliz_a;
     }
 }
