@@ -12,14 +12,22 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Iniciando setup...");
     
-    //setup de OTA
+    // Intentar conectarse al WiFi (con timeout)
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-     while (WiFi.status() != WL_CONNECTED) {
+    Serial.print("Conectando a WiFi");
+    unsigned long start_time_wifi = millis();
+    const unsigned long wifi_timeout = 5000; // 5 segundos de intento
+
+    while (WiFi.status() != WL_CONNECTED && millis() - start_time_wifi < wifi_timeout) {
         delay(500);
         Serial.print(".");
-     }
-    Serial.println("\nWiFi conectado");
-    check_and_update_firmware(FIRMWARE_VERSION);
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nWiFi conectado");
+        check_and_update_firmware(FIRMWARE_VERSION);
+    } else {
+        Serial.println("\nNo se pudo conectar al WiFi, iniciando sin conexión.");
+    }
 
     //Setup del Pet
     displayManager.init();
