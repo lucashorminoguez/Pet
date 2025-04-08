@@ -2,7 +2,6 @@
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
 #include "ota_update.h"
-#include "ota_config.h"
 
 bool check_and_update_firmware(const char* localVersion) {
   HTTPClient http;

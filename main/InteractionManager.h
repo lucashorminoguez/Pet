@@ -24,5 +24,6 @@ private:
     void goBack();
     void selectMenuItem();
     void showStatus();
+    void inputPassword(char* password);
 };
 #endif
