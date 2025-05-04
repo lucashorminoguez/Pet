@@ -41,6 +41,7 @@ private:
     const unsigned char* shitImage;
     size_t petImageSize;
     size_t shitImageSize;
+    size_t remeraImageSize;
     static int shit_posx;  // Variable estática para posición X
     static int shit_posy;  // Variable estática para posición y
     // Indicadores

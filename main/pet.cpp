@@ -32,6 +32,7 @@ Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager)
     shitImage = shit;
     shitImageSize = sizeof(shit);
     petImageSize = sizeof(comiendo_a);
+    remeraImageSize = sizeof(remera_arg);
   if (instance == nullptr) {
     instance = this;
   }
@@ -104,6 +105,8 @@ void Pet::render() {
                 drawShit(97,100);
                 first_open= false;
             }
+            drawPet();
+            first_open=false;
         }
         if (xpos_anterior != xpos ){
           if(dormir>0){
@@ -122,8 +125,8 @@ void Pet::render() {
                 drawShit(97,100);
             }
           }
+          drawPet();
         }
-        drawPet(); // Dibuja la mascota
     }else {
         first_open = true;
     }
@@ -167,13 +170,15 @@ void Pet::drawPet() {
     }
     
     // Dibujo de la ropa 
-    rc = png.openFLASH((uint8_t *)ropaImage, petImageSize, [](PNGDRAW *pDraw) {
+    rc = png.openFLASH((uint8_t *)ropaImage, remeraImageSize, [](PNGDRAW *pDraw) {
         if (Pet::instance) {
             Pet::instance->pngDraw(pDraw);
         }
     });
 
     if (rc == PNG_SUCCESS) {
+        pngw = png.getWidth();
+        pngh = png.getHeight();
         displayManager.getTFT().startWrite();
         png.decode(NULL, 0);
         displayManager.getTFT().endWrite();
@@ -343,6 +348,7 @@ void Pet::updateAppearance() {
         first_open = true ;
       } else if (cont_alimentar == 4){
         delay(600);
+        first_open = true;
         cont_alimentar=0;
         alimentar = 0;
       }
