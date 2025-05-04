@@ -1,7 +1,9 @@
 #include "Pet.h"
-#include "Mapache.h" // Array de la imagen
-#include "shit.h" // Array de shit
-// Inicializo la variable estática
+#include "Mapache.h" 
+#include "shit.h" 
+#include "remeras.h"
+
+// Ini variables 
 Pet* Pet::instance = nullptr;
 int Pet::happiness = 100;
 int Pet::hunger = 100;
@@ -15,6 +17,8 @@ extern const uint8_t feliz_a[];
 extern const uint8_t mapache[];
 extern const uint8_t normal[];
 extern const uint8_t comiendo_a[];
+
+
 int alimentar = 0;
 int stop_sleep = 0;
 int dormir = 0;
@@ -24,6 +28,7 @@ Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager)
     : displayManager(displayManager), interactionManager(interactionManager), // Inicializo interactionManager
       currentState(HAPPY), xpos(0), ypos(10) {
     petImage = feliz_a; // nombre del array de la imagen
+    ropaImage = remera_arg;
     shitImage = shit;
     shitImageSize = sizeof(shit);
     petImageSize = sizeof(comiendo_a);
@@ -156,6 +161,19 @@ void Pet::drawPet() {
     if (rc == PNG_SUCCESS) {
         pngw = png.getWidth();
         pngh = png.getHeight();
+        displayManager.getTFT().startWrite();
+        png.decode(NULL, 0);
+        displayManager.getTFT().endWrite();
+    }
+    
+    // Dibujo de la ropa 
+    rc = png.openFLASH((uint8_t *)ropaImage, petImageSize, [](PNGDRAW *pDraw) {
+        if (Pet::instance) {
+            Pet::instance->pngDraw(pDraw);
+        }
+    });
+
+    if (rc == PNG_SUCCESS) {
         displayManager.getTFT().startWrite();
         png.decode(NULL, 0);
         displayManager.getTFT().endWrite();

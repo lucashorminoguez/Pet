@@ -37,6 +37,7 @@ private:
     int16_t xpos, ypos;
     PNG png;
     const unsigned char* petImage;
+    const unsigned char* ropaImage;
     const unsigned char* shitImage;
     size_t petImageSize;
     size_t shitImageSize;

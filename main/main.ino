@@ -33,19 +33,19 @@ void setup() {
     displayManager.init();
     Serial.println("DisplayManager inicializado");
 
-    // Dibujar el fondo de la habitación
+    // Dibujar el fondo de la habitacion
     displayManager.drawRoomBackground();
     Serial.println("Fondo de la habitación dibujado");
 
-    // Crear la instancia de InteractionManager
+    // Crear instancia InteractionManager
     interactionManager = new InteractionManager(displayManager, *pet);
     Serial.println("InteractionManager creado");
 
-    // Crear la instancia de Pet
+    // Crear instancia Pet
     pet = new Pet(displayManager, *interactionManager);
     Serial.println("Pet creado");
 
-    // Renderizar el pet
+    // Renderizar pet
     pet->render();
     Serial.println("Pet renderizado");
 
