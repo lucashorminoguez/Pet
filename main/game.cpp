@@ -1,162 +1,172 @@
 #include "Game.h"
 #include <esp_task_wdt.h>
 
-// Definiciones de colores para la pantalla
+// Definiciones de colores
 #define PLAYER_COLOR TFT_RED
 #define OBJECT_COLOR TFT_BLACK
 #define BACKGROUND_COLOR TFT_WHITE
+#define HEART_COLOR TFT_RED
+#define HEART_EMPTY_COLOR TFT_BLUE
 
-// Tamaño de la cuadrícula virtual
+// Tamaño de la cuadrícula
 #define GRID_ROWS 12
 #define GRID_COLS 12
-#define CELL_SIZE 20  // Celda más pequeña para mantener tamaño de pantalla
+#define CELL_SIZE 20
+int Game::highScore = 0;  // Inicializo la variable estática
 
-Game::Game(TFT_eSPI& tft) : tft(tft), playerPos(GRID_COLS / 2), score(0) {
-    initGameScreen();  // Inicializa la cuadrícula virtual
+Game::Game(TFT_eSPI& tft) : tft(tft), playerPos(GRID_COLS / 2), score(0), lives(3) {
+    initGameScreen();
+    initControls();
+}
+
+void Game::initControls() {
+    pinMode(15, INPUT_PULLUP); // Izquierda
+    pinMode(19, INPUT_PULLUP); // Derecha
+    pinMode(5, INPUT_PULLUP);  // Salir
 }
 
 void Game::initGameScreen() {
-    // Limpia la pantalla TFT y la matriz virtual
     tft.fillScreen(BACKGROUND_COLOR);
     for (int i = 0; i < GRID_ROWS; i++) {
         for (int j = 0; j < GRID_COLS; j++) {
-            screen[i][j] = ' ';  // Vacío
+            screen[i][j] = ' ';
         }
     }
 }
 
-// Función para dibujar el personaje con forma de animal
 void Game::drawPlayer(int x, int y) {
     // Cuerpo
     tft.fillRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 4, PLAYER_COLOR);
-    
     // Orejas
     tft.fillRect(x + 2, y + 2, 4, 4, PLAYER_COLOR);
     tft.fillRect(x + CELL_SIZE - 6, y + 2, 4, 4, PLAYER_COLOR);
-    
     // Brazos
     tft.fillRect(x, y + 8, 4, 8, PLAYER_COLOR);
     tft.fillRect(x + CELL_SIZE - 4, y + 8, 4, 8, PLAYER_COLOR);
-    
     // Ojos
     tft.fillRect(x + 8, y + 8, 4, 4, TFT_BLACK);
     tft.fillRect(x + CELL_SIZE - 12, y + 8, 4, 4, TFT_BLACK);
 }
 
-
-
 void Game::drawGameScreen() {
-    tft.fillScreen(BACKGROUND_COLOR);  // Limpia la pantalla
+    tft.fillScreen(BACKGROUND_COLOR);
     
-    // Recorre la cuadrícula virtual y dibuja cada celda
+    // Dibuja corazones (vidas)
+    for (int i = 0; i < 3; i++) {
+        tft.fillCircle(220 - i * 20, 15, 5, i < lives ? HEART_COLOR : HEART_EMPTY_COLOR);
+    }
+
+    // Dibuja la cuadrícula
     for (int i = 0; i < GRID_ROWS; i++) {
         for (int j = 0; j < GRID_COLS; j++) {
-            // Dibuja el jugador en la última fila, siempre que no haya objeto en esa celda
             if (i == GRID_ROWS - 1 && j == playerPos) {
-                drawPlayer(j * CELL_SIZE, i * CELL_SIZE);  // Dibuja el personaje
-            }
-            // Si en la celda hay un objeto, dibuja el objeto
-            else if (screen[i][j] == '#') {
+                drawPlayer(j * CELL_SIZE, i * CELL_SIZE);
+            } else if (screen[i][j] == '#') {
                 tft.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE, OBJECT_COLOR);
             }
         }
     }
 
-    // Muestra la puntuación
+    // Puntuación
     tft.setTextColor(TFT_BLACK);
     tft.setTextSize(1);
     tft.setCursor(10, 10);
-    tft.print("Puntuacion: ");
-    tft.println(score);
+    tft.print("Score: ");
+    tft.print(score);
 }
 
-
-
-
 void Game::updateGame() {
-    // Mueve los objetos hacia abajo en la cuadrícula virtual
-    for (int i = GRID_ROWS - 2; i >= 0; i--) {
+    // Primero: Mueve todos los objetos hacia abajo
+    for (int i = GRID_ROWS - 1; i > 0; i--) {  //Arranca desde la utlima fila 
         for (int j = 0; j < GRID_COLS; j++) {
-            screen[i + 1][j] = screen[i][j];
+            screen[i][j] = screen[i - 1][j];  // Copia de arriba hacia abajo
         }
     }
-    // Limpia la primera fila
+
+    // Segundo: Limpia la fila superior (después de mover)
     for (int j = 0; j < GRID_COLS; j++) {
         screen[0][j] = ' ';
     }
 
-    // Con una probabilidad (por ejemplo, 20%) crea un nuevo objeto en la parte superior
-    if (random(0, 100) < 20) {
-        int dropPos = random(0, GRID_COLS);
-        screen[0][dropPos] = '#';
+    // Tercero: Genera nuevos objetos (con probabilidad ajustada)
+    int spawnChance = 10 + (min(5, score / 100) * 10);  // 10%-60% en pasos de 10
+    if (random(100) < spawnChance) {
+        int col = random(GRID_COLS);
+        if (screen[0][col] == ' ') {  
+            screen[0][col] = '#';
+        }
     }
 
-    // Verifica si el jugador colisionó con un objeto
-    // NOTA: Como el jugador se dibuja siempre en la última fila,
-    // si en la matriz virtual hay '#' en esa posición, consideramos colisión.
+    // Verifica colisión con el jugador (en la última fila)
     if (screen[GRID_ROWS - 1][playerPos] == '#') {
-        tft.fillScreen(TFT_RED);  // Pantalla roja al perder
-        tft.setCursor(60, 100);
-        tft.setTextColor(TFT_WHITE);
-        tft.setTextSize(2);
-        tft.print("GAME OVER");
-        delay(2000);  // Muestra el mensaje 2 segundos
-        score = 0;   // Reinicia la puntuación
-        initGameScreen();  // Reinicia la cuadrícula virtual
+        lives--;
+        screen[GRID_ROWS - 1][playerPos] = ' ';  // Elimina el objeto
+        
+        if (lives <= 0) {
+            if (score > highScore) highScore = score;
+            showGameOver();
+            score = 0;
+            lives = 3;
+            initGameScreen();
+        }
     }
+    score++;
+}
+void Game::showGameOver() {
+    tft.fillScreen(TFT_RED);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.setCursor(40, 80);
+    tft.print("GAME OVER");
+    tft.setCursor(40, 120);
+    tft.print("Score: ");
+    tft.print(score);
+    tft.setCursor(40, 150);
+    tft.print("Record: ");
+    tft.print(highScore);
+    delay(3000);
 }
 
 void Game::movePlayer(char move) {
     static unsigned long lastMoveTime = 0;
-    const unsigned long moveDelay = 200; // 200ms entre movimientos
+    const unsigned long moveDelay = 200;
     
-    // Verifica si ha pasado el tiempo suficiente desde el último movimiento
-    if(millis() - lastMoveTime >= moveDelay) {
-        if(digitalRead(move == 'a' ? 15 : 19) == LOW) {
-            // Mueve solo una celda
-            if(move == 'a' && playerPos > 0) {
-                playerPos--;
-            }
-            else if(move == 'd' && playerPos < GRID_COLS - 1) {
-                playerPos++;
-            }
-            
-            lastMoveTime = millis(); // Registra el momento del movimiento
+    if (millis() - lastMoveTime >= moveDelay) {
+        if (digitalRead(move == 'a' ? 15 : 19) == LOW) {
+            if (move == 'a' && playerPos > 0) playerPos--;
+            else if (move == 'd' && playerPos < GRID_COLS - 1) playerPos++;
+            lastMoveTime = millis();
         }
     }
 }
 
 void Game::playGame() {
     unsigned long lastUpdate = millis();
-    const unsigned long gameUpdateInterval = 100; //actualiza cada 100 ms 
+    const unsigned long gameUpdateInterval = 100;
     
     while (true) {
-        unsigned long currentMillis = millis();
+        // Controles
+        movePlayer('a');
+        movePlayer('d');
         
-        // Controles mejorados
-        movePlayer('a'); // Para izquierda (pin 15)
-        movePlayer('d'); // Para derecha (pin 19)
-
-        // No permite salir hasta que no termine el juego:
+        // Salir al menú
         if (digitalRead(5) == LOW) {
             delay(130);
-            if(digitalRead(5) == LOW) {
-            // Limpia la pantalla y vuelve al menú, solo al finalizar el juego.
-            tft.fillScreen(BACKGROUND_COLOR);
-            break;
+            if (digitalRead(5) == LOW) {
+                tft.fillScreen(BACKGROUND_COLOR);
+                break;
             }
         }
 
-        // Actualiza y dibuja el juego cada 100 ms
-        if (currentMillis - lastUpdate >= gameUpdateInterval) {
-            lastUpdate = currentMillis;
+        // Actualizar juego
+        if (millis() - lastUpdate >= gameUpdateInterval) {
+            lastUpdate = millis();
             updateGame();
             drawGameScreen();
-            score++;  // Incrementa la puntuación (opcional)
         }
 
-        // Permite que otras tareas se ejecuten y resetea el watchdog
+        // Mantiene estable el ESP32
         esp_task_wdt_reset();
-        vTaskDelay(1);  // Pequeño delay para ceder tiempo
+        vTaskDelay(1);
     }
 }

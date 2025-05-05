@@ -13,6 +13,7 @@ public:
     enum State { HAPPY, SAD, HUNGRY, SLEEPY, DIRTY };
 
     Pet(DisplayManager& displayManager, InteractionManager& interactionManager);
+    void updateClothe(int select);
     void update();
     void feed();
     void play();
@@ -29,6 +30,7 @@ public:
     int getHunger() const;
     int getToilet() const;
     int getSleep() const;
+
 
 private:
     DisplayManager& displayManager;

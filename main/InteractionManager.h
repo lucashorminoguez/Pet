@@ -20,6 +20,7 @@ private:
     int selectedMenuItem;
     void show_wifi_networks();
     void openMenu();
+    void show_clothes();
     void displayMenu();
     void goBack();
     void selectMenuItem();

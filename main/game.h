@@ -23,11 +23,14 @@ public:
 
     // Función principal del juego, donde se ejecuta el ciclo del juego
     void playGame();  
-    
+    void initControls();
+    void showGameOver(); 
 private:
     TFT_eSPI& tft;  // Referencia al objeto TFT_eSPI para dibujar en pantalla
     int playerPos;  // Posición del jugador en la pantalla (eje X)
     int score;  // Puntuación del jugador
+    static int highScore; 
+    int16_t lives;
     char screen[24][24];  // Matriz que simula la pantalla del juego (con objetos y jugador)
 };
 

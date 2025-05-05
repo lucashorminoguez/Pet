@@ -12,27 +12,27 @@ int Pet::sleep = 100;
 int xpos_anterior = 0;
 bool shit_done = false;
 int Pet::shit_posx = 0;
-int Pet::shit_posy = 0;
+int Pet::shit_posy = 2;
 extern const uint8_t feliz_a[];
 extern const uint8_t mapache[];
 extern const uint8_t normal[];
 extern const uint8_t comiendo_a[];
 
-
+int remera = 4;
 int alimentar = 0;
 int stop_sleep = 0;
 int dormir = 0;
 bool first_open = true;
-
+bool ropa = false;
 Pet::Pet(DisplayManager& displayManager, InteractionManager& interactionManager) 
     : displayManager(displayManager), interactionManager(interactionManager), // Inicializo interactionManager
-      currentState(HAPPY), xpos(0), ypos(10) {
+      currentState(HAPPY), xpos(0), ypos(8) {
     petImage = feliz_a; // nombre del array de la imagen
     ropaImage = remera_arg;
     shitImage = shit;
     shitImageSize = sizeof(shit);
     petImageSize = sizeof(comiendo_a);
-    remeraImageSize = sizeof(remera_arg);
+    remeraImageSize = sizeof(ssj);
   if (instance == nullptr) {
     instance = this;
   }
@@ -91,6 +91,9 @@ void Pet::render() {
 
         // Sueño
         displayManager.getTFT().drawString("Sueño: " + String(sleep) + "%", 120, 10);
+        
+        updateAppearance();    // Actualizar la apariencia del pet
+        
         if (first_open == true ){
             if (toilet < 90){
                 drawShit(20,100);
@@ -112,7 +115,7 @@ void Pet::render() {
           if(dormir>0){
             xpos = xpos_anterior;
           }else{
-          displayManager.clearPet(xpos_anterior, ypos-10);
+          displayManager.clearPet(xpos_anterior, 0);
           xpos_anterior = instance -> xpos ;
             if(toilet<90){
                 drawShit(20,100);  
@@ -168,20 +171,21 @@ void Pet::drawPet() {
         png.decode(NULL, 0);
         displayManager.getTFT().endWrite();
     }
-    
+    if (ropa == true){
     // Dibujo de la ropa 
     rc = png.openFLASH((uint8_t *)ropaImage, remeraImageSize, [](PNGDRAW *pDraw) {
         if (Pet::instance) {
             Pet::instance->pngDraw(pDraw);
         }
     });
-
+    
     if (rc == PNG_SUCCESS) {
         pngw = png.getWidth();
         pngh = png.getHeight();
         displayManager.getTFT().startWrite();
         png.decode(NULL, 0);
         displayManager.getTFT().endWrite();
+    }
     }
 }
 
@@ -256,7 +260,7 @@ String getStateName(Pet::State state) {
 
 void Pet::update() {
     static int counter = 0; // Contador para reducir estados
-    static unsigned long lastDebugTime = 0; // Último momento en que se enviaron mensajes de depuración
+    static unsigned long lastDebugTime = 0; // ultimo envio de mensajes de depuracion
     counter++;
 
     // Reducir los indicadores solo cada 150 llamadas a update()
@@ -268,7 +272,7 @@ void Pet::update() {
         hunger = max(0, hunger - 1);       // El hambre aumenta con el tiempo
         toilet = max(0, toilet - 1);       // La necesidad de ir al baño aumenta
         sleep = max(0, sleep - 1);         // El sueño aumenta con el tiempo
-        // Depuración: Mostrar los valores de los indicadores
+        // indicadores
         Serial.println("Contador reiniciado. Valores actuales:");
         Serial.println("  Felicidad: " + String(happiness));
         Serial.println("  Hambre: " + String(hunger));
@@ -296,25 +300,54 @@ void Pet::update() {
     if (getState() != previousState) {
         Serial.println("Estado cambiado a: " + getStateName(getState()));
     }
-    updateAppearance();
+    //updateAppearance(); lo comente porque ya lo hago adentro de render 
     // Renderizar el pet
     instance ->render();
 }
 
+void Pet::updateClothe(int select){
+    ropa = false ;
+    if (dormir == 0){
+        if (select < 3) {
+            ropa = true ;
+        }
+    }
+    remera = select;
+}
 
 int cont_alimentar = 0;
 void Pet::updateAppearance() {
+    switch (remera){
+        case 0 : 
+            ropaImage = scout;
+            break;
+        case 1 :
+            ropaImage = remera_arg;
+            break;
+        case 2 : 
+            ropaImage = ssj;
+            break;
+    }
     if(dormir>0){
       if (dormir == 1) {
           //delay(600);
           petImage = durmiendo_a;
-          displayManager.clearPet(xpos_anterior,ypos-10);
+          ypos = 34;
+          displayManager.clearPet(xpos_anterior,0);
           first_open = true ;
+          ropa = false;
           dormir ++;
        if(stop_sleep == 1){
           stop_sleep=0;
-          displayManager.clearPet(xpos_anterior,ypos-10);
+          ypos = 8;
+          displayManager.clearPet(xpos_anterior,0);
           dormir = 0;
+          if (remera < 3){ // el usuario eligio algun valor de remera
+            ropa = true;
+          }
+          //else {
+            //ropa = false;
+          //}
         }
       }else{
         //delay(600);
@@ -330,21 +363,48 @@ void Pet::updateAppearance() {
     } else if(happiness > 99 && dormir==0){
       petImage = feliz_a;
     }
+
+
     if (alimentar == 1) {
       cont_alimentar ++ ;
       if(cont_alimentar==1){
-        displayManager.clearPet(xpos_anterior,ypos-10);
+        displayManager.clearPet(xpos_anterior,0);
         first_open = true ;
         petImage = comiendo_a;
+        switch (remera){
+            case 0:
+                ropaImage = scout_comiendo_a;
+            break;
+            case 1:
+                ropaImage = argentina_comiendo_a;
+            break;
+        }
+
       }else if(cont_alimentar==2){
         delay(600);
-        petImage = comiendo_b;
-        displayManager.clearPet(xpos_anterior,ypos-10);
+        displayManager.clearPet(xpos_anterior,0);
         first_open = true ;
+        petImage = comiendo_b;
+        switch (remera){
+            case 0:
+                ropaImage = scout_comiendo_b;
+            break;
+            case 1:
+                ropaImage = argentina_comiendo_a;
+            break;
+        }
       }else if (cont_alimentar ==3){
         delay(600);
         petImage= comiendo_a;
-        displayManager.clearPet(xpos_anterior,ypos-10);
+        switch (remera){
+            case 0:
+                ropaImage = scout_comiendo_a;
+            break;
+            case 1:
+                ropaImage = argentina_comiendo_a;
+            break;
+        }
+        displayManager.clearPet(xpos_anterior,0);
         first_open = true ;
       } else if (cont_alimentar == 4){
         delay(600);

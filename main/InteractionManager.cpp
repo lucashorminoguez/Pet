@@ -24,7 +24,7 @@ void InteractionManager::update() {
     if (buttonLeftPressed) {
         if (menuIsOpen) {
             // Navegar a la siguiente opcion (circular)
-            selectedMenuItem = (selectedMenuItem + 1) % 5; // Circular entre 0 y 4
+            selectedMenuItem = (selectedMenuItem + 1) % 6; // Circular entre 0 y 5
             displayMenu();
         } else {
             openMenu();
@@ -73,7 +73,10 @@ void InteractionManager::selectMenuItem() {
         case 3:
             pet.clean(); // aumenta baño
             break;
-        case 4:
+        case 4: 
+            show_clothes();
+            break;
+        case 5:
             show_wifi_networks(); //actualiza redes disponibles
             break;
     }
@@ -98,10 +101,10 @@ void InteractionManager::displayMenu() {
       strcpy(aux_dormir,"Dormir");
     }
 
-    const char* menuItems[] = {"Alimentar", "Jugar", aux_dormir, "Limpiar","Wifi"};
+    const char* menuItems[] = {"Alimentar", "Jugar", aux_dormir, "Limpiar","Cambiar Ropa","Wifi"};
     displayManager.getTFT().setTextSize(2); // Tamaño de las letras
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         if (i == selectedMenuItem) {
             displayManager.getTFT().setTextColor(TFT_BLACK, TFT_YELLOW); // Texto negro sobre fondo amarillo
         } else {
@@ -149,6 +152,51 @@ void InteractionManager::showStatus() {
     displayManager.getTFT().drawString("Estado: " + String(stateText), 10, 20);
 }
 
+void InteractionManager::show_clothes(){
+    delay(200); // Debounce
+    int numClothes = 4; // Número total de prendas disponibles
+    int selectedCloth = 0; // Índice de la prenda seleccionada
+    bool redrawNeeded = true;
+    int oldSelectedCloth = -1; // Para controlar cambios
+    const char* menuItems[] = {"Scout", "Argentina", "ssj (demo)","nada"};
+    while(true) {
+        // Redibujar solo si hubo cambios
+        if(redrawNeeded || selectedCloth != oldSelectedCloth) {
+            displayManager.clearScreen(TFT_PINK);
+            displayManager.getTFT().setTextSize(2);
+            
+            for(int i = 0; i < numClothes; i++) {
+                if(i == selectedCloth) {
+                    displayManager.getTFT().setTextColor(TFT_BLACK, TFT_YELLOW);
+                } else {
+                    displayManager.getTFT().setTextColor(TFT_WHITE, TFT_PINK);
+                }
+                displayManager.getTFT().drawString(menuItems[i], 10, 20 + i * 30);
+            }
+            
+            oldSelectedCloth = selectedCloth;
+            redrawNeeded = false;
+        }
+        delay(200);
+        // Manejo de botones
+        if(digitalRead(5) == LOW) { // medio - siguiente prenda
+            selectedCloth = (selectedCloth + 1) % numClothes;
+            delay(150); // Debounce
+        }
+        
+        if(digitalRead(19) == LOW) { // derecha - volver
+            return;
+
+        }
+        
+        if(digitalRead(15) == LOW) { // izq - confirmar 
+            pet.updateClothe(selectedCloth);
+            return; // Salir del menú de ropa
+        }
+        
+        delay(50); // Pequeña pausa para no saturar
+    }
+}
 void InteractionManager::show_wifi_networks() {
     // ------------------------------------------------------------
     // 1. CONFIGURACIÓN INICIAL
